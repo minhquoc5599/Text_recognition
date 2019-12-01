@@ -1,11 +1,19 @@
 package com.example.text_recognition;
 
+import android.content.ClipData;
+import android.content.ClipboardManager;
+import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.Paint;
 import android.graphics.drawable.BitmapDrawable;
+import android.graphics.pdf.PdfDocument;
 import android.media.Image;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
 import android.text.TextUtils;
 import android.util.SparseArray;
 import android.view.View;
@@ -24,24 +32,31 @@ import com.google.android.gms.vision.text.TextRecognizer;
 import com.theartofdev.edmodo.cropper.CropImage;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.Locale;
 import java.util.Objects;
 
 public class OcrActivity extends AppCompatActivity {
 
-    TextView mResult;
+    EditText mResult;
 
     ImageView img;
 
     Uri imgUri;
 
-    Button btnNext;
 
-    EditText editName;
+    Button copy;
 
-    public static final String TEXT_OCR ="TEXTOCR";
-    public static final String TEXT_NAME ="TEXTNAME";
-    public static final String IMAGE_OCR ="IMAGEOCR";
-    public static final String BUNDLE ="BUNDLE";
+    Button importPDF;
+
+
+//    public static final String TEXT_OCR ="TEXTOCR";
+//    public static final String TEXT_NAME ="TEXTNAME";
+//    public static final String IMAGE_OCR ="IMAGEOCR";
+//    public static final String BUNDLE ="BUNDLE";
 
 
 
@@ -60,34 +75,79 @@ public class OcrActivity extends AppCompatActivity {
 
         CropImage.activity().start(OcrActivity.this);
 
+        copy = findViewById(R.id.btnCopy);
 
-        btnNext = findViewById(R.id.btnNext);
-
-
-        editName = findViewById(R.id.editName);
-
-        btnNext.setOnClickListener(new View.OnClickListener() {
+        copy.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if(TextUtils.isEmpty(mResult.getText().toString()))
-                {
-                    Toast.makeText(OcrActivity.this,"error",Toast.LENGTH_SHORT).show();
-                }
-                else
-                {
 
-                    byBundle();
+                ClipboardManager clipboardManager = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+                ClipData clip = ClipData.newPlainText("EditText", mResult.getText().toString());
+                clipboardManager.setPrimaryClip(clip);
+
+                Toast.makeText(OcrActivity.this, "Text copied to clipboard", Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        importPDF = findViewById(R.id.importPDF);
+
+        importPDF.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                BitmapDrawable bitmapDrawable = (BitmapDrawable) img.getDrawable();
+                Bitmap bitmap = bitmapDrawable.getBitmap();
+
+                PdfDocument pdfDocument = new PdfDocument();
+                PdfDocument.PageInfo pi = new PdfDocument.PageInfo.Builder(bitmap.getWidth(), bitmap.getHeight(), 1).create();
+                PdfDocument.Page page = pdfDocument.startPage(pi);
+
+                Canvas canvas = page.getCanvas();
+                Paint paint = new Paint();
+                paint.setColor(Color.parseColor("#FFFFFF"));
+                canvas.drawPaint(paint);
+
+                bitmap = Bitmap.createScaledBitmap(bitmap,bitmap.getWidth(), bitmap.getHeight(), true);
+                paint.setColor(Color.BLUE);
+
+                canvas.drawBitmap(bitmap,0,0,null);
+
+                pdfDocument.finishPage(page);
+
+
+                // save bitmap image
+
+                File folder = new File(Environment.getExternalStorageDirectory(),"PDF Folder");
+
+                if(!folder.exists())
+                {
+                    folder.mkdir();
                 }
+
+                String namePdf = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(System.currentTimeMillis());
+
+                File filePdf = new File(folder, namePdf + ".pdf");
+
+                try
+                {
+                    FileOutputStream fileOutputStream = new FileOutputStream(filePdf);
+                    pdfDocument.writeTo(fileOutputStream);
+
+                    Toast.makeText(OcrActivity.this, filePdf + " is saved to " + filePdf +".pdf", Toast.LENGTH_SHORT).show();
+                }catch (IOException e)
+                {
+                    e.printStackTrace();
+                }
+
+                pdfDocument.close();
+
+
             }
         });
 
 
-
-
-
     }
 
-    private void byBundle() {
+    /*private void byBundle() {
         BitmapDrawable bitmapDrawable = (BitmapDrawable) img.getDrawable();
         Bitmap bitmap = bitmapDrawable.getBitmap();
         ByteArrayOutputStream bs = new ByteArrayOutputStream();
@@ -100,7 +160,7 @@ public class OcrActivity extends AppCompatActivity {
         bundle.putByteArray(IMAGE_OCR, b);
         intent.putExtra(BUNDLE, bundle);
         startActivity(intent);
-    }
+    }*/
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {

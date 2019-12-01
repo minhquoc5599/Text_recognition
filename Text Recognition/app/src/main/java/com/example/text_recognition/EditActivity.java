@@ -25,11 +25,11 @@ public class EditActivity extends AppCompatActivity {
         imageView =findViewById(R.id.imageEdit);
 
 
-        setDataByBundle();
+//        setDataByBundle();
 
     }
 
-    private void setDataByBundle() {
+    /*private void setDataByBundle() {
 
         Intent intent = getIntent();
 
@@ -46,6 +46,6 @@ public class EditActivity extends AppCompatActivity {
 
         imageView.setImageBitmap(bitmap);
 
-    }
+    }*/
 
 }
