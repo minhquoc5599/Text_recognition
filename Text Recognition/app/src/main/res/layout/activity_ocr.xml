@@ -151,13 +151,15 @@
                 android:gravity="center_vertical|center">
 
                 <Button
-                    android:id="@+id/btnShare"
+                    android:id="@+id/importTxt"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Share"
+                    android:text="Import txt"
                     android:textSize="20sp"/>
 
             </LinearLayout>
+
+
 
             <LinearLayout
                 android:layout_width="0dp"
@@ -169,10 +171,50 @@
                     android:id="@+id/importPDF"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Import"
+                    android:text="Import Pdf"
                     android:textSize="20sp"/>
 
             </LinearLayout>
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:orientation="horizontal"
+            android:gravity="center"
+            android:weightSum="2">
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="match_parent"
+                android:gravity="center_vertical|center">
+
+                <Button
+                    android:id="@+id/shareText"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Share Text"
+                    android:textSize="20sp"/>
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="match_parent"
+                android:gravity="center_vertical|center">
+
+                <Button
+                    android:id="@+id/shareImage"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Share Image"
+                    android:textSize="20sp"/>
+
+            </LinearLayout>
+
         </LinearLayout>
 
     </LinearLayout>

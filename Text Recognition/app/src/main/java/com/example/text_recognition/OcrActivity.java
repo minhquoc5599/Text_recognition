@@ -32,7 +32,9 @@ import com.google.android.gms.vision.text.TextRecognizer;
 import com.theartofdev.edmodo.cropper.CropImage;
 
 import java.io.ByteArrayOutputStream;
+import java.io.EOFException;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
@@ -52,6 +54,12 @@ public class OcrActivity extends AppCompatActivity {
 
     Button importPDF;
 
+    Button importTxt;
+
+    Button shareText;
+
+    Button shareImage;
+
 
 //    public static final String TEXT_OCR ="TEXTOCR";
 //    public static final String TEXT_NAME ="TEXTNAME";
@@ -66,86 +74,217 @@ public class OcrActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_ocr);
 
-        mResult =findViewById(R.id.result);
+        mResult = findViewById(R.id.result);
 
         img = findViewById(R.id.imageResult);
+
+        copy = findViewById(R.id.btnCopy);
+
+        importPDF = findViewById(R.id.importPDF);
+
+        importTxt = findViewById(R.id.importTxt);
+
+        shareText = findViewById(R.id.shareText);
+
+        shareImage = findViewById(R.id.shareImage);
 
         Objects.requireNonNull(getSupportActionBar()).setDisplayHomeAsUpEnabled(true);
 
 
         CropImage.activity().start(OcrActivity.this);
 
-        copy = findViewById(R.id.btnCopy);
+
 
         copy.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
 
-                ClipboardManager clipboardManager = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
-                ClipData clip = ClipData.newPlainText("EditText", mResult.getText().toString());
-                clipboardManager.setPrimaryClip(clip);
-
-                Toast.makeText(OcrActivity.this, "Text copied to clipboard", Toast.LENGTH_SHORT).show();
+                copyToClipBoard();
             }
         });
 
-        importPDF = findViewById(R.id.importPDF);
+
 
         importPDF.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                BitmapDrawable bitmapDrawable = (BitmapDrawable) img.getDrawable();
-                Bitmap bitmap = bitmapDrawable.getBitmap();
 
-                PdfDocument pdfDocument = new PdfDocument();
-                PdfDocument.PageInfo pi = new PdfDocument.PageInfo.Builder(bitmap.getWidth(), bitmap.getHeight(), 1).create();
-                PdfDocument.Page page = pdfDocument.startPage(pi);
-
-                Canvas canvas = page.getCanvas();
-                Paint paint = new Paint();
-                paint.setColor(Color.parseColor("#FFFFFF"));
-                canvas.drawPaint(paint);
-
-                bitmap = Bitmap.createScaledBitmap(bitmap,bitmap.getWidth(), bitmap.getHeight(), true);
-                paint.setColor(Color.BLUE);
-
-                canvas.drawBitmap(bitmap,0,0,null);
-
-                pdfDocument.finishPage(page);
+                imageToPdf();
+            }
+        });
 
 
-                // save bitmap image
 
-                File folder = new File(Environment.getExternalStorageDirectory(),"PDF Folder");
+        importTxt.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
 
-                if(!folder.exists())
-                {
-                    folder.mkdir();
-                }
-
-                String namePdf = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(System.currentTimeMillis());
-
-                File filePdf = new File(folder, namePdf + ".pdf");
-
-                try
-                {
-                    FileOutputStream fileOutputStream = new FileOutputStream(filePdf);
-                    pdfDocument.writeTo(fileOutputStream);
-
-                    Toast.makeText(OcrActivity.this, filePdf + " is saved to " + filePdf +".pdf", Toast.LENGTH_SHORT).show();
-                }catch (IOException e)
-                {
-                    e.printStackTrace();
-                }
-
-                pdfDocument.close();
-
+                textToTxt();
 
             }
         });
 
 
+
+        shareText.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+
+                shareText();
+
+            }
+        });
+
+        shareImage.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                shareImage();
+            }
+        });
+
     }
+
+    private void shareImage() {
+        BitmapDrawable bitmapDrawable = (BitmapDrawable) img.getDrawable();
+        Bitmap bitmap = bitmapDrawable.getBitmap();
+
+        try {
+            File file = new File(OcrActivity.this.getExternalCacheDir(), "Image.png");
+            FileOutputStream fout = new FileOutputStream(file);
+            bitmap.compress(Bitmap.CompressFormat.PNG, 80, fout);
+            fout.flush();
+            fout.close();
+            file.setReadable(true, false);
+
+            Intent intent = new Intent(Intent.ACTION_SEND);
+            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            intent.putExtra(Intent.EXTRA_STREAM, Uri.fromFile(file));
+            intent.setType("image/png");
+            startActivity(Intent.createChooser(intent, "Select how you want to share the text"));
+        }catch (FileNotFoundException e){
+            e.printStackTrace();
+            Toast.makeText(OcrActivity.this, "File not found", Toast.LENGTH_SHORT).show();
+        }catch (IOException e){
+            e.printStackTrace();
+        }catch (Exception e) {
+            e.printStackTrace();
+        }
+
+
+
+
+    }
+
+    private void shareText() {
+        String text = mResult.getText().toString();
+
+        Intent shareIntent = new Intent(Intent.ACTION_SEND);
+        shareIntent.setType("text/plain");
+        shareIntent.putExtra(Intent.EXTRA_SUBJECT, "Write your subject here");
+        shareIntent.putExtra(Intent.EXTRA_TEXT, text);
+        startActivity(Intent.createChooser(shareIntent, "Select how you want to share the text") );
+    }
+
+
+    private void copyToClipBoard() {
+        ClipboardManager clipboardManager = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+        ClipData clip = ClipData.newPlainText("EditText", mResult.getText().toString());
+        clipboardManager.setPrimaryClip(clip);
+
+        Toast.makeText(OcrActivity.this, "Text copied to clipboard", Toast.LENGTH_SHORT).show();
+
+    }
+    private void imageToPdf() {
+        BitmapDrawable bitmapDrawable = (BitmapDrawable) img.getDrawable();
+        Bitmap bitmap = bitmapDrawable.getBitmap();
+
+        PdfDocument pdfDocument = new PdfDocument();
+        PdfDocument.PageInfo pi = new PdfDocument.PageInfo.Builder(bitmap.getWidth(), bitmap.getHeight(), 1).create();
+        PdfDocument.Page page = pdfDocument.startPage(pi);
+
+        Canvas canvas = page.getCanvas();
+        Paint paint = new Paint();
+        paint.setColor(Color.parseColor("#FFFFFF"));
+        canvas.drawPaint(paint);
+
+        bitmap = Bitmap.createScaledBitmap(bitmap,bitmap.getWidth(), bitmap.getHeight(), true);
+        paint.setColor(Color.BLUE);
+
+        canvas.drawBitmap(bitmap,0,0,null);
+
+        pdfDocument.finishPage(page);
+
+
+        // save bitmap image
+        String namePdf = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(System.currentTimeMillis());
+
+        File folder = new File(Environment.getExternalStorageDirectory(),"Text_recognition");
+
+        File folder_2 = new File(folder, namePdf);
+
+        if(!folder.exists() || !folder_2.exists())
+        {
+            folder.mkdir();
+            folder_2.mkdir();
+        }
+
+        File filePdf = new File(folder_2, namePdf + ".pdf");
+
+        try
+        {
+            FileOutputStream fileOutputStream = new FileOutputStream(filePdf);
+            pdfDocument.writeTo(fileOutputStream);
+
+            Toast.makeText(OcrActivity.this,"Image is saved to " + namePdf +".pdf", Toast.LENGTH_SHORT).show();
+        }catch (IOException e)
+        {
+            e.printStackTrace();
+        }
+
+        pdfDocument.close();
+
+    }
+
+    private void textToTxt() {
+
+        String text = mResult.getText().toString();
+
+        String nameTxt = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(System.currentTimeMillis());
+
+        File folder = new File(Environment.getExternalStorageDirectory(),"Text_recognition");
+
+        File newTxt = new File(folder,nameTxt + ".txt");
+
+        FileOutputStream fout = null;
+
+
+        try{
+            fout = new FileOutputStream(newTxt);
+            fout.write(text.getBytes());
+
+
+            Toast.makeText(OcrActivity.this, "Text is saved to " + nameTxt +".txt",Toast.LENGTH_SHORT).show();
+        }catch (FileNotFoundException e)
+        {
+            e.printStackTrace();
+        }catch (IOException e)
+        {
+            e.printStackTrace();
+        }finally {
+            if(fout!= null)
+            {
+                try{
+                    fout.close();
+                }catch(IOException e)
+                {
+                    e.printStackTrace();
+                }
+
+            }
+        }
+
+    }
+
 
     /*private void byBundle() {
         BitmapDrawable bitmapDrawable = (BitmapDrawable) img.getDrawable();
