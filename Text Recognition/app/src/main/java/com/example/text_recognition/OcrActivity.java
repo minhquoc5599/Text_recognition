@@ -24,7 +24,9 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
 
 import com.google.android.gms.vision.Frame;
 import com.google.android.gms.vision.text.TextBlock;
@@ -60,6 +62,8 @@ public class OcrActivity extends AppCompatActivity {
 
     Button shareImage;
 
+    Toolbar toolbarOcr;
+
 
 //    public static final String TEXT_OCR ="TEXTOCR";
 //    public static final String TEXT_NAME ="TEXTNAME";
@@ -74,19 +78,12 @@ public class OcrActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_ocr);
 
-        mResult = findViewById(R.id.result);
 
-        img = findViewById(R.id.imageResult);
+        Connect();
 
-        copy = findViewById(R.id.btnCopy);
+        actionToolbar();
 
-        importPDF = findViewById(R.id.importPDF);
 
-        importTxt = findViewById(R.id.importTxt);
-
-        shareText = findViewById(R.id.shareText);
-
-        shareImage = findViewById(R.id.shareImage);
 
         Objects.requireNonNull(getSupportActionBar()).setDisplayHomeAsUpEnabled(true);
 
@@ -142,6 +139,30 @@ public class OcrActivity extends AppCompatActivity {
             }
         });
 
+    }
+
+    private void actionToolbar() {
+        setSupportActionBar(toolbarOcr);
+        ActionBar actionBar = getSupportActionBar();
+        actionBar.setDisplayHomeAsUpEnabled(true);
+        toolbarOcr.setNavigationOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                finish();
+            }
+        });
+    }
+
+    private void Connect() {
+
+        toolbarOcr = findViewById(R.id.toolbarOcr);
+        mResult = findViewById(R.id.result);
+        img = findViewById(R.id.imageResult);
+        copy = findViewById(R.id.btnCopy);
+        importPDF = findViewById(R.id.importPDF);
+        importTxt = findViewById(R.id.importTxt);
+        shareText = findViewById(R.id.shareText);
+        shareImage = findViewById(R.id.shareImage);
     }
 
     private void shareImage() {
